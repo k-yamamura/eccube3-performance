@@ -63,6 +63,10 @@ class InstallController
         $this->config_path = __DIR__ . '/../../../../app/config/eccube';
         $this->dist_path = __DIR__ . '/../../Resource/config';
         $this->cache_path = __DIR__ . '/../../../../app/cache';
+        $cachePath = __DIR__.'/../../../../app/cache/'. Constant::CONFIG_CACHE_FILE_NAME;
+
+        $file = new Filesystem();
+        $file->remove($cachePath);
     }
 
     private function isValid(Request $request, Form $form)
@@ -314,7 +318,7 @@ class InstallController
         $host = $request->getSchemeAndHttpHost();
         $basePath = $request->getBasePath();
 
-        $adminUrl = $host . $basePath . '/' . $config['admin_root'] . '/';
+        $adminUrl = $host . $basePath . '/' . $config['admin_route'] . '/';
 
         return $app['twig']->render('complete.twig', array(
             'admin_url' => $adminUrl,

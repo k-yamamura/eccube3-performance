@@ -25,6 +25,7 @@ namespace Eccube;
 
 use Eccube\Application\ApplicationTrait;
 use Eccube\Common\Constant;
+use Symfony\Component\Config\ConfigCache;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\Request;
@@ -77,101 +78,113 @@ class Application extends ApplicationTrait
         // load config
         $app = $this;
         $this['config'] = $this->share(function ($app) {
-            $ymlPath = __DIR__.'/../../app/config/eccube';
-            $distPath = __DIR__.'/../../src/Eccube/Resource/config';
+            $cachePath = __DIR__.'/../../app/cache/'.Constant::CONFIG_CACHE_FILE_NAME;
 
-            $config = array();
-            $config_yml = $ymlPath.'/config.yml';
-            if (file_exists($config_yml)) {
-                $config = Yaml::parse(file_get_contents($config_yml));
+            $cache = new ConfigCache($cachePath, false);
+
+            if (!$cache->isFresh()) {
+
+                $ymlPath = __DIR__.'/../../app/config/eccube';
+                $distPath = __DIR__.'/../../src/Eccube/Resource/config';
+
+                $config = array();
+                $config_yml = $ymlPath.'/config.yml';
+                if (file_exists($config_yml)) {
+                    $config = Yaml::parse(file_get_contents($config_yml));
+                }
+
+                $config_dist = array();
+                $config_yml_dist = $distPath.'/config.yml.dist';
+                if (file_exists($config_yml_dist)) {
+                    $config_dist = Yaml::parse(file_get_contents($config_yml_dist));
+                }
+
+                $config_path = array();
+                $path_yml = $ymlPath.'/path.yml';
+                if (file_exists($path_yml)) {
+                    $config_path = Yaml::parse(file_get_contents($path_yml));
+                    // RootDirまでのpath補完
+                    $config_path['root_dir'] = $app->getRootDir();
+                    $config_path['public_path_realdir'] = $app->getRootDir().$config_path['public_path'];
+                    $config_path['image_save_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['image_save_realdir'];
+                    $config_path['image_temp_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['image_temp_realdir'];
+                    $config_path['user_data_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['user_data_realdir'];
+                    $config_path['block_default_realdir'] = $app->getSrcDir().$config_path['block_default_realdir'];
+                    $config_path['block_realdir'] = $app->getAppDir().$config_path['block_realdir'];
+                    $config_path['template_default_realdir'] = $app->getSrcDir().$config_path['template_default_realdir'];
+                    $config_path['template_default_html_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['template_default_html_realdir'];
+                    $config_path['template_admin_realdir'] = $app->getSrcDir().$config_path['template_admin_realdir'];
+                    $config_path['template_admin_html_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['template_admin_html_realdir'];
+                    $config_path['template_realdir'] = $app->getAppDir().$config_path['template_realdir'];
+                    $config_path['template_html_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['template_html_realdir'];
+                    $config_path['template_temp_realdir'] = $app->getAppDir().$config_path['template_temp_realdir'];
+                    $config_path['csv_temp_realdir'] = $app->getAppDir().$config_path['csv_temp_realdir'];
+                    $config_path['plugin_realdir'] = $app->getAppDir().$config_path['plugin_realdir'];
+                    $config_path['plugin_temp_realdir'] = $app->getAppDir().$config_path['plugin_temp_realdir'];
+                    $config_path['plugin_html_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['plugin_html_realdir'];
+                }
+
+                $config_constant = array();
+                $constant_yml = $ymlPath.'/constant.yml';
+                if (file_exists($constant_yml)) {
+                    $config_constant = Yaml::parse(file_get_contents($constant_yml));
+                    $config_constant = empty($config_constant) ? array() : $config_constant;
+                }
+
+                $config_constant_dist = array();
+                $constant_yml_dist = $distPath.'/constant.yml.dist';
+                if (file_exists($constant_yml_dist)) {
+                    $config_constant_dist = Yaml::parse(file_get_contents($constant_yml_dist));
+                }
+
+                $configAll = array_replace_recursive($config_constant_dist, $config_dist, $config_constant, $config_path, $config);
+
+                $database = array();
+                $yml = $ymlPath.'/database.yml';
+                if (file_exists($yml)) {
+                    $database = Yaml::parse(file_get_contents($yml));
+                }
+
+                $mail = array();
+                $yml = $ymlPath.'/mail.yml';
+                if (file_exists($yml)) {
+                    $mail = Yaml::parse(file_get_contents($yml));
+                }
+                $configAll = array_replace_recursive($configAll, $database, $mail);
+
+                $config_log = array();
+                $yml = $ymlPath.'/log.yml';
+                if (file_exists($yml)) {
+                    $config_log = Yaml::parse(file_get_contents($yml));
+                }
+                $config_log_dist = array();
+                $log_yml_dist = $distPath.'/log.yml.dist';
+                if (file_exists($log_yml_dist)) {
+                    $config_log_dist = Yaml::parse(file_get_contents($log_yml_dist));
+                }
+
+                $configAll = array_replace_recursive($configAll, $config_log_dist, $config_log);
+
+                $config_nav = array();
+                $yml = $ymlPath.'/nav.yml';
+                if (file_exists($yml)) {
+                    $config_nav = array('nav' => Yaml::parse(file_get_contents($yml)));
+                }
+                $config_nav_dist = array();
+                $nav_yml_dist = $distPath.'/nav.yml.dist';
+                if (file_exists($nav_yml_dist)) {
+                    $config_nav_dist = array('nav' => Yaml::parse(file_get_contents($nav_yml_dist)));
+                }
+
+                $configAll = array_replace_recursive($configAll, $config_nav_dist, $config_nav);
+
+                $resource = array();
+
+                $cache->write(sprintf('<?php return %s', var_export($configAll, true)).';', $resource);
+
             }
 
-            $config_dist = array();
-            $config_yml_dist = $distPath.'/config.yml.dist';
-            if (file_exists($config_yml_dist)) {
-                $config_dist = Yaml::parse(file_get_contents($config_yml_dist));
-            }
-
-            $config_path = array();
-            $path_yml = $ymlPath.'/path.yml';
-            if (file_exists($path_yml)) {
-                $config_path = Yaml::parse(file_get_contents($path_yml));
-                // RootDirまでのpath補完
-                $config_path['root_dir'] = $app->getRootDir();
-                $config_path['public_path_realdir'] = $app->getRootDir().$config_path['public_path'];
-                $config_path['image_save_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['image_save_realdir'];
-                $config_path['image_temp_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['image_temp_realdir'];
-                $config_path['user_data_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['user_data_realdir'];
-                $config_path['block_default_realdir'] = $app->getSrcDir().$config_path['block_default_realdir'];
-                $config_path['block_realdir'] = $app->getAppDir().$config_path['block_realdir'];
-                $config_path['template_default_realdir'] = $app->getSrcDir().$config_path['template_default_realdir'];
-                $config_path['template_default_html_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['template_default_html_realdir'];
-                $config_path['template_admin_realdir'] = $app->getSrcDir().$config_path['template_admin_realdir'];
-                $config_path['template_admin_html_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['template_admin_html_realdir'];
-                $config_path['template_realdir'] = $app->getAppDir().$config_path['template_realdir'];
-                $config_path['template_html_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['template_html_realdir'];
-                $config_path['template_temp_realdir'] = $app->getAppDir().$config_path['template_temp_realdir'];
-                $config_path['csv_temp_realdir'] = $app->getAppDir().$config_path['csv_temp_realdir'];
-                $config_path['plugin_realdir'] = $app->getAppDir().$config_path['plugin_realdir'];
-                $config_path['plugin_temp_realdir'] = $app->getAppDir().$config_path['plugin_temp_realdir'];
-                $config_path['plugin_html_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['plugin_html_realdir'];
-            }
-
-            $config_constant = array();
-            $constant_yml = $ymlPath.'/constant.yml';
-            if (file_exists($constant_yml)) {
-                $config_constant = Yaml::parse(file_get_contents($constant_yml));
-                $config_constant = empty($config_constant) ? array() : $config_constant;
-            }
-
-            $config_constant_dist = array();
-            $constant_yml_dist = $distPath.'/constant.yml.dist';
-            if (file_exists($constant_yml_dist)) {
-                $config_constant_dist = Yaml::parse(file_get_contents($constant_yml_dist));
-            }
-
-            $configAll = array_replace_recursive($config_constant_dist, $config_dist, $config_constant, $config_path, $config);
-
-            $database = array();
-            $yml = $ymlPath.'/database.yml';
-            if (file_exists($yml)) {
-                $database = Yaml::parse(file_get_contents($yml));
-            }
-
-            $mail = array();
-            $yml = $ymlPath.'/mail.yml';
-            if (file_exists($yml)) {
-                $mail = Yaml::parse(file_get_contents($yml));
-            }
-            $configAll = array_replace_recursive($configAll, $database, $mail);
-
-            $config_log = array();
-            $yml = $ymlPath.'/log.yml';
-            if (file_exists($yml)) {
-                $config_log = Yaml::parse(file_get_contents($yml));
-            }
-            $config_log_dist = array();
-            $log_yml_dist = $distPath.'/log.yml.dist';
-            if (file_exists($log_yml_dist)) {
-                $config_log_dist = Yaml::parse(file_get_contents($log_yml_dist));
-            }
-
-            $configAll = array_replace_recursive($configAll, $config_log_dist, $config_log);
-
-            $config_nav = array();
-            $yml = $ymlPath.'/nav.yml';
-            if (file_exists($yml)) {
-                $config_nav = array('nav' => Yaml::parse(file_get_contents($yml)));
-            }
-            $config_nav_dist = array();
-            $nav_yml_dist = $distPath.'/nav.yml.dist';
-            if (file_exists($nav_yml_dist)) {
-                $config_nav_dist = array('nav' => Yaml::parse(file_get_contents($nav_yml_dist)));
-            }
-
-            $configAll = array_replace_recursive($configAll, $config_nav_dist, $config_nav);
-
-            return $configAll;
+            return require $cachePath;
         });
     }
 
@@ -511,6 +524,14 @@ class Application extends ApplicationTrait
             'orm.proxies_dir' => __DIR__.'/../../app/cache/doctrine',
             'orm.em.options' => array(
                 'mappings' => $ormMappings,
+                'metadata_cache' => array(
+                    'driver' => 'filesystem',
+                    'path' => __DIR__.'/../../app/cache/doctrine',
+                ),
+                'query_cache' => array(
+                    'driver' => 'filesystem',
+                    'path' => __DIR__.'/../../app/cache/doctrine',
+                ),
             ),
         ));
     }

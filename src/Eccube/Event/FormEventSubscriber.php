@@ -68,13 +68,13 @@ class FormEventSubscriber implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-//        return array(
+        return array(
 //            FormEvents::PRE_SET_DATA => 'onPreSetData',
 //            FormEvents::POST_SET_DATA => 'onPostSetData',
 //            FormEvents::PRE_SUBMIT => 'onPreSubmit',
 //            FormEvents::SUBMIT => 'onSubmit',
 //            FormEvents::POST_SUBMIT => 'onPostSubmit',
-//        );
+        );
     }
 
     public function onPreSetData(FormEvent $event)
