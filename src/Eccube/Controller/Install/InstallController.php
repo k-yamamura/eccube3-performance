@@ -314,7 +314,7 @@ class InstallController
         $host = $request->getSchemeAndHttpHost();
         $basePath = $request->getBasePath();
 
-        $adminUrl = $host . $basePath . '/' . $config['admin_dir'];
+        $adminUrl = $host . $basePath . '/' . $config['admin_root'] . '/';
 
         return $app['twig']->render('complete.twig', array(
             'admin_url' => $adminUrl,
@@ -786,8 +786,8 @@ class InstallController
         $ROOT_DIR = realpath(__DIR__ . '/../../../../');
         $ROOT_URLPATH = $request->getBasePath();
 
-        $target = array('${ADMIN_ROUTE}', '${TEMPLATE_CODE}', '${USER_DATA_ROUTE}', '${ROOT_DIR}', '${ROOT_URLPATH}');
-        $replace = array($ADMIN_ROUTE, $TEMPLATE_CODE, $USER_DATA_ROUTE, $ROOT_DIR, $ROOT_URLPATH);
+        $target = array('${ADMIN_ROUTE}', '${TEMPLATE_CODE}', '${USER_DATA_ROUTE}', '${ROOT_URLPATH}');
+        $replace = array($ADMIN_ROUTE, $TEMPLATE_CODE, $USER_DATA_ROUTE, $ROOT_URLPATH);
 
         $fs = new Filesystem();
         $content = str_replace(
