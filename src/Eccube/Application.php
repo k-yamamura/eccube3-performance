@@ -218,6 +218,11 @@ class Application extends ApplicationTrait
         $this->register(new \Silex\Provider\SerializerServiceProvider());
         $this->register(new \Eccube\ServiceProvider\ValidatorServiceProvider());
 
+        $this->register(new \Silex\Provider\HttpCacheServiceProvider(), array(
+            'http_cache.cache_dir' => __DIR__.'/../../app/cache/http/',
+       //     'http_cache.esi' => null,
+        ));
+
         $app = $this;
         $this->error(function (\Exception $e, $code) use ($app) {
             if ($app['debug']) {
@@ -757,6 +762,13 @@ class Application extends ApplicationTrait
             if (\Symfony\Component\HttpKernel\HttpKernelInterface::MASTER_REQUEST !== $event->getRequestType()) {
                 return;
             }
+
+            $response = $event->getResponse();
+            $request = $event->getRequest();
+
+            $response->setETag(md5($response->getContent()));
+            $response->setPublic();
+            $response->isNotModified($request);
 
             $route = $event->getRequest()->attributes->get('_route');
 
