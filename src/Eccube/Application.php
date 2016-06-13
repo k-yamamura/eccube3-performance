@@ -212,16 +212,15 @@ class Application extends ApplicationTrait
         $this->initRendering();
 
         // init provider
+        $this->register(new \Silex\Provider\HttpCacheServiceProvider(), array(
+            'http_cache.cache_dir' => __DIR__.'/../../app/cache/http/',
+       ));
+
         $this->register(new \Silex\Provider\HttpFragmentServiceProvider());
         $this->register(new \Silex\Provider\UrlGeneratorServiceProvider());
         $this->register(new \Silex\Provider\FormServiceProvider());
         $this->register(new \Silex\Provider\SerializerServiceProvider());
         $this->register(new \Eccube\ServiceProvider\ValidatorServiceProvider());
-
-        $this->register(new \Silex\Provider\HttpCacheServiceProvider(), array(
-            'http_cache.cache_dir' => __DIR__.'/../../app/cache/http/',
-       //     'http_cache.esi' => null,
-        ));
 
         $app = $this;
         $this->error(function (\Exception $e, $code) use ($app) {
@@ -524,6 +523,14 @@ class Application extends ApplicationTrait
                 );
             }
         }
+//
+//        $config = $this['orm.em']->getConfiguration();
+//
+//        $c = new FilesystemCache(__DIR__.'/../../app/config/cache/query');
+//        $config->setQueryCacheImpl($c);
+//
+//        $c = new PhpFileCache(__DIR__.'/../../app/config/cache/result');
+//        $config->setResultCacheImpl($c);
 
         $this->register(new \Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider(), array(
             'orm.proxies_dir' => __DIR__.'/../../app/cache/doctrine',
@@ -766,9 +773,18 @@ class Application extends ApplicationTrait
             $response = $event->getResponse();
             $request = $event->getRequest();
 
-            $response->setETag(md5($response->getContent()));
+            $response->setSharedMaxAge(100);
             $response->setPublic();
-            $response->isNotModified($request);
+
+//            $response->setETag(md5($response->getContent()));
+//            $response->isNotModified($request);
+//
+//            $response->setCache(array(
+//                'public'        => false,
+//                'private'        => true,
+//                //'max_age'       => 1,
+//                //'s_maxage'      => 10,
+//            ));
 
             $route = $event->getRequest()->attributes->get('_route');
 

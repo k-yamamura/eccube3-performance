@@ -19,11 +19,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #}
-{% set builder = app['form.factory'].createNamedBuilder('', 'search_product').setMethod('GET') %}
-{% set formObj = builder.getForm() %}
-{% set master_request = app.request_stack.getMasterRequest() %}
-{% set non = formObj.handleRequest(master_request) %}
-{% set form = formObj.createView() %}
 <div class="drawer_block pc header_bottom_area">
     <div id="search" class="search">
         <form method="get" id="searchform" action="{{ path('product_list') }}">

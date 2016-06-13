@@ -38,10 +38,15 @@ class LoginController
             ->createNamedBuilder('', 'customer_login')
             ->getForm();
 
-        return $app->render('Block/login.twig', array(
+        $response = $app->render('Block/login.twig', array(
             'error' => $app['security.last_error']($request),
             'email' => $email,
             'form' => $form->createView(),
         ));
+
+        $response->headers->addCacheControlDirective('no-cache', true);
+        $response->headers->addCacheControlDirective('no-store', true);
+
+        return $response;
     }
 }

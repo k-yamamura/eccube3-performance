@@ -55,7 +55,7 @@ set_time_limit(0);
 while (@ob_end_flush())
     ;
 
-$obj = new CreateEcCubeData();
+$obj = new CreateEcCubeTestData();
 $start = microtime(true);
 //$objData->objQuery->begin();
 

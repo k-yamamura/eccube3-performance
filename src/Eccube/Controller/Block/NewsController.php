@@ -36,8 +36,13 @@ class NewsController
                 array('rank' => 'DESC')
             );
 
-        return $app->render('Block/news.twig', array(
+        $response = $app->render('Block/news.twig', array(
             'NewsList' => $NewsList,
         ));
+
+        $response->headers->addCacheControlDirective('no-cache',true);
+        $response->headers->addCacheControlDirective('no-store',true);
+
+        return $response;
     }
 }
