@@ -54,6 +54,7 @@ class ShopController extends AbstractController
             $form->handleRequest($app['request']);
             if ($form->isValid()) {
 
+                // DB登録
                 $app['eccube.repository.base_info']->save($BaseInfo);
 
                 $event = new EventArgs(

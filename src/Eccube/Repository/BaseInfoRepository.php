@@ -51,15 +51,15 @@ class BaseInfoRepository extends EntityRepository
         $query = $this->createQueryBuilder('bi')
             ->where('bi.id = :id')
             ->setParameter('id', $id)
-            ->getQuery();
-
-        $query->useResultCache(true, null, $this->cacheKey);
+            ->getQuery()
+            ->useResultCache(true, null, $this->cacheKey);
 
         return $query->getSingleResult();
     }
 
     /**
-     * BaseInfoを保存する
+     * BaseInfoを保存
+     *
      * @param BaseInfo $BaseInfo
      */
     public function save(BaseInfo $BaseInfo)

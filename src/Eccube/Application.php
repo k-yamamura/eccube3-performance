@@ -432,8 +432,7 @@ class Application extends ApplicationTrait
                 }
 
                 try {
-                    $DeviceType = $app['eccube.repository.master.device_type']
-                        ->find(\Eccube\Entity\Master\DeviceType::DEVICE_TYPE_PC);
+                    $DeviceType = $app['eccube.repository.master.device_type']->get(\Eccube\Entity\Master\DeviceType::DEVICE_TYPE_PC);
                     $PageLayout = $app['eccube.repository.page_layout']->getByUrl($DeviceType, $route);
                 } catch (\Doctrine\ORM\NoResultException $e) {
                     $PageLayout = $app['eccube.repository.page_layout']->newPageLayout($DeviceType);
