@@ -23,6 +23,8 @@
 
 namespace Eccube;
 
+use Doctrine\Common\Cache\FilesystemCache;
+use Doctrine\Common\Cache\PhpFileCache;
 use Eccube\Application\ApplicationTrait;
 use Eccube\Common\Constant;
 use Symfony\Component\Config\ConfigCache;
@@ -80,7 +82,7 @@ class Application extends ApplicationTrait
         $this['config'] = $this->share(function ($app) {
             $cachePath = __DIR__.'/../../app/cache/'.Constant::CONFIG_CACHE_FILE_NAME;
 
-            $cache = new ConfigCache($cachePath, false);
+            $cache = new ConfigCache($cachePath, $app['debug']);
 
             if (!$cache->isFresh()) {
 
@@ -214,7 +216,7 @@ class Application extends ApplicationTrait
         // init provider
         $this->register(new \Silex\Provider\HttpCacheServiceProvider(), array(
             'http_cache.cache_dir' => __DIR__.'/../../app/cache/http/',
-       ));
+        ));
 
         $this->register(new \Silex\Provider\HttpFragmentServiceProvider());
         $this->register(new \Silex\Provider\UrlGeneratorServiceProvider());
@@ -523,14 +525,6 @@ class Application extends ApplicationTrait
                 );
             }
         }
-//
-//        $config = $this['orm.em']->getConfiguration();
-//
-//        $c = new FilesystemCache(__DIR__.'/../../app/config/cache/query');
-//        $config->setQueryCacheImpl($c);
-//
-//        $c = new PhpFileCache(__DIR__.'/../../app/config/cache/result');
-//        $config->setResultCacheImpl($c);
 
         $this->register(new \Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider(), array(
             'orm.proxies_dir' => __DIR__.'/../../app/cache/doctrine',
@@ -546,6 +540,15 @@ class Application extends ApplicationTrait
                 ),
             ),
         ));
+
+        $config = $this['orm.em']->getConfiguration();
+
+        $cache = new FilesystemCache(__DIR__.'/../../app/cache/query');
+        $config->setQueryCacheImpl($cache);
+
+        $cache = new PhpFileCache(__DIR__.'/../../app/cache/result');
+        $config->setResultCacheImpl($cache);
+
     }
 
     public function initSecurity()
@@ -780,8 +783,8 @@ class Application extends ApplicationTrait
 //            $response->isNotModified($request);
 //
 //            $response->setCache(array(
-//                'public'        => false,
-//                'private'        => true,
+//                'public' => false,
+//                'private' => true,
 //                //'max_age'       => 1,
 //                //'s_maxage'      => 10,
 //            ));
