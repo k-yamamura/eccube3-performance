@@ -529,16 +529,16 @@ class Application extends BaseApplication
             ),
         ));
 
-        $config = $this['orm.em']->getConfiguration();
+        $configuration = $this['orm.em.config'];
 
         $cache = new FilesystemCache($doctrineCacheDir.'/metadata');
-        $config->setMetadataCacheImpl($cache);
+        $configuration->setMetadataCacheImpl($cache);
 
         $cache = new FilesystemCache($doctrineCacheDir.'/query');
-        $config->setQueryCacheImpl($cache);
+        $configuration->setQueryCacheImpl($cache);
 
         $cache = new PhpFileCache($doctrineCacheDir.'/result');
-        $config->setResultCacheImpl($cache);
+        $configuration->setResultCacheImpl($cache);
 
     }
 
