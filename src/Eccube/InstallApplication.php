@@ -23,10 +23,9 @@
 
 namespace Eccube;
 
-use Eccube\Application\ApplicationTrait;
 use Symfony\Component\Yaml\Yaml;
 
-class InstallApplication extends ApplicationTrait
+class InstallApplication extends BaseApplication
 {
     public function __construct(array $values = array())
     {
@@ -35,11 +34,11 @@ class InstallApplication extends ApplicationTrait
         parent::__construct($values);
 
         $app->register(new \Silex\Provider\MonologServiceProvider(), array(
-            'monolog.logfile' => __DIR__.'/../../app/log/install.log',
+            'monolog.logfile' => $app->getLogDir() . '/install.log',
         ));
 
         // load config
-        $app['config'] = $app->share(function() {
+        $app['config'] = $app->share(function () {
             $distPath = __DIR__.'/../../src/Eccube/Resource/config';
 
             $configConstant = array();
@@ -79,7 +78,7 @@ class InstallApplication extends ApplicationTrait
         $this->register(new \Silex\Provider\TranslationServiceProvider(), array(
             'locale' => 'ja',
         ));
-        $app['translator'] = $app->share($app->extend('translator', function($translator, \Silex\Application $app) {
+        $app['translator'] = $app->share($app->extend('translator', function ($translator, \Silex\Application $app) {
             $translator->addLoader('yaml', new \Symfony\Component\Translation\Loader\YamlFileLoader());
 
             $r = new \ReflectionClass('Symfony\Component\Validator\Validator');
@@ -98,10 +97,11 @@ class InstallApplication extends ApplicationTrait
             return $translator;
         }));
 
+        $app->register(new \Silex\Provider\ServiceControllerServiceProvider());
         $app->mount('', new ControllerProvider\InstallControllerProvider());
         $app->register(new ServiceProvider\InstallServiceProvider());
 
-        $app->error(function(\Exception $e, $code) use ($app) {
+        $app->error(function (\Exception $e, $code) use ($app) {
             if ($code === 404) {
                 return $app->redirect($app->url('install'));
             } elseif ($app['debug']) {

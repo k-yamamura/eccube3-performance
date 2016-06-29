@@ -29,14 +29,14 @@ template_admin_realdir: /Eccube/Resource/template/admin
 template_admin_html_realdir: /template/admin
 template_realdir: /template/${TEMPLATE_CODE}
 template_html_realdir: /template/${TEMPLATE_CODE}
-template_temp_realdir: /cache/eccube/template
+template_temp_realdir: /eccube/template
 
 # realdir::csv
-csv_temp_realdir: /cache/eccube/csv
+csv_temp_realdir: /eccube/csv
 
 # realdir:plugin
 plugin_realdir: /Plugin
-plugin_temp_realdir: /cache/plugin
+plugin_temp_realdir: /eccube/plugin
 plugin_html_realdir: /plugin
 
 # urlpath

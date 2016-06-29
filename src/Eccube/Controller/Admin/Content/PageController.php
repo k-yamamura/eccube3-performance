@@ -30,9 +30,9 @@ use Eccube\Entity\Master\DeviceType;
 use Eccube\Entity\PageLayout;
 use Eccube\Event\EccubeEvents;
 use Eccube\Event\EventArgs;
+use Eccube\Util\Cache;
 use Eccube\Util\Str;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\Request;
 
 class PageController extends AbstractController
@@ -145,8 +145,7 @@ class PageController extends AbstractController
                 $app->addSuccess('admin.register.complete', 'admin');
 
                 // twig キャッシュの削除.
-                $finder = Finder::create()->in($app['config']['root_dir'].'/app/cache/twig');
-                $fs->remove($finder);
+                Cache::clear($app, false, true);
 
                 return $app->redirect($app->url('admin_content_page_edit', array('id' => $PageLayout->getId())));
             }

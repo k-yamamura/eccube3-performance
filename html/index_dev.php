@@ -86,7 +86,7 @@ if (isset($app['config']['delivery_address'])) {
 
 // Silex Web Profiler
 $app->register(new \Silex\Provider\WebProfilerServiceProvider(), array(
-    'profiler.cache_dir' => __DIR__.'/../app/cache/profiler',
+    'profiler.cache_dir' => $app->getCacheDir().'/profiler',
     'profiler.mount_prefix' => '/_profiler',
 ));
 

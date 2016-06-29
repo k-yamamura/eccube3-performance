@@ -23,6 +23,7 @@
 
 namespace Eccube\Util;
 
+use Eccube\Application;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
@@ -43,9 +44,12 @@ class Cache
      * @param boolean $isTwig Twigキャッシュファイルのみ削除する場合 true
      * @return boolean 削除に成功した場合 true
      */
-    public static function clear($app, $isAll, $isTwig = false)
+    public static function clear(Application $app, $isAll, $isTwig = false)
     {
-        $cacheDir = $app['config']['root_dir'].'/app/cache';
+        $cacheDir = $app->getCacheDir();
+        if (!is_dir($cacheDir)) {
+            $cacheDir = $app['config']['root_dir'].'/app/cache';
+        }
 
         $filesystem = new Filesystem();
         if ($isAll) {

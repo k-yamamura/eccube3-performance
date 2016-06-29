@@ -1,6 +1,27 @@
 <?php
+/*
+ * This file is part of EC-CUBE
+ *
+ * Copyright(c) 2000-2015 LOCKON CO.,LTD. All Rights Reserved.
+ *
+ * http://www.lockon.co.jp/
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ */
 
-namespace Eccube\Application;
+namespace Eccube;
 
 use Eccube\Event\TemplateEvent;
 use Monolog\Logger;
@@ -11,41 +32,43 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
- * TODO Traitが使えるようになったら不要になる
+ * Class BaseApplication
+ *
+ * @package Eccube
  */
-class ApplicationTrait extends \Silex\Application
+class BaseApplication extends \Silex\Application
 {
     /**
      * Application Shortcut Methods
      */
     public function addSuccess($message, $namespace = 'front')
     {
-        $this['session']->getFlashBag()->add('eccube.' . $namespace . '.success', $message);
+        $this['session']->getFlashBag()->add('eccube.'.$namespace.'.success', $message);
     }
 
     public function addError($message, $namespace = 'front')
     {
-        $this['session']->getFlashBag()->add('eccube.' . $namespace . '.error', $message);
+        $this['session']->getFlashBag()->add('eccube.'.$namespace.'.error', $message);
     }
 
     public function addDanger($message, $namespace = 'front')
     {
-        $this['session']->getFlashBag()->add('eccube.' . $namespace . '.danger', $message);
+        $this['session']->getFlashBag()->add('eccube.'.$namespace.'.danger', $message);
     }
 
     public function addWarning($message, $namespace = 'front')
     {
-        $this['session']->getFlashBag()->add('eccube.' . $namespace . '.warning', $message);
+        $this['session']->getFlashBag()->add('eccube.'.$namespace.'.warning', $message);
     }
 
     public function addInfo($message, $namespace = 'front')
     {
-        $this['session']->getFlashBag()->add('eccube.' . $namespace . '.info', $message);
+        $this['session']->getFlashBag()->add('eccube.'.$namespace.'.info', $message);
     }
 
     public function addRequestError($message, $namespace = 'front')
     {
-        $this['session']->getFlashBag()->set('eccube.' . $namespace . '.request.error', $message);
+        $this['session']->getFlashBag()->set('eccube.'.$namespace.'.request.error', $message);
     }
 
     public function clearMessage()
@@ -64,7 +87,7 @@ class ApplicationTrait extends \Silex\Application
         if (is_null($namespace)) {
             $this['session']->getFlashBag()->set('eccube.login.target.path', $targetPath);
         } else {
-            $this['session']->getFlashBag()->set('eccube.' . $namespace . '.login.target.path', $targetPath);
+            $this['session']->getFlashBag()->set('eccube.'.$namespace.'.login.target.path', $targetPath);
         }
     }
 
@@ -234,9 +257,9 @@ class ApplicationTrait extends \Silex\Application
         $eventName = $view;
         if ($this->isAdminRequest()) {
             // 管理画面の場合、event名に「Admin/」を付ける
-            $eventName = 'Admin/' . $view;
+            $eventName = 'Admin/'.$view;
         }
-        $this['monolog']->debug('Template Event Name : ' . $eventName);
+        $this['monolog']->debug('Template Event Name : '.$eventName);
 
         $this['eccube.event.dispatcher']->dispatch($eventName, $event);
 
@@ -298,5 +321,96 @@ class ApplicationTrait extends \Silex\Application
     public function url($route, $parameters = array())
     {
         return $this['url_generator']->generate($route, $parameters, UrlGeneratorInterface::ABSOLUTE_URL);
+    }
+
+    /**
+     * EC-CUBE Root Directory
+     *
+     * @return string
+     */
+    public function getRootDir()
+    {
+        static $dir;
+        if (null === $dir) {
+            $r = new \ReflectionObject($this);
+            $dir = dirname(dirname(dirname($r->getFileName())));
+        }
+
+        return $dir;
+    }
+
+    /**
+     * EC-CUBE app Directory
+     *
+     * @return string
+     */
+    public function getAppDir()
+    {
+        static $dir;
+        if (null === $dir) {
+            $dir = $this->getRootDir().'/app';
+        }
+
+        return $dir;
+    }
+
+    /**
+     * EC-CUBE cache Directory
+     *
+     * @return string
+     */
+    public function getCacheDir()
+    {
+        return $this->getAppDir().'/cache/'.$this->getEnvironment();
+    }
+
+    /**
+     * EC-CUBE src Directory
+     *
+     * @return string
+     */
+    public function getSrcDir()
+    {
+        static $dir;
+        if (null === $dir) {
+            $dir = $this->getRootDir().'/src';
+        }
+
+        return $dir;
+    }
+
+    /**
+     * EC-CUBE html Directory
+     *
+     * @return string
+     */
+    public function getHtmlDir()
+    {
+        static $dir;
+        if (null === $dir) {
+            $dir = $this->getRootDir().$this['config']['public_path'];
+        }
+
+        return $dir;
+    }
+
+    /**
+     * EC-CUBE log Directory
+     *
+     * @return string
+     */
+    public function getLogDir()
+    {
+        return $this->getAppDir().'/log';
+    }
+
+    /**
+     * get environment
+     *
+     * @return string
+     */
+    public function getEnvironment()
+    {
+        return $this['debug'] ? 'dev' : 'prod';
     }
 }

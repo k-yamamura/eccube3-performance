@@ -25,7 +25,6 @@ namespace Eccube;
 
 use Doctrine\Common\Cache\FilesystemCache;
 use Doctrine\Common\Cache\PhpFileCache;
-use Eccube\Application\ApplicationTrait;
 use Eccube\Common\Constant;
 use Symfony\Component\Config\ConfigCache;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -34,7 +33,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Yaml\Yaml;
 
-class Application extends ApplicationTrait
+class Application extends BaseApplication
 {
     protected static $instance;
 
@@ -80,7 +79,7 @@ class Application extends ApplicationTrait
         // load config
         $app = $this;
         $this['config'] = $this->share(function ($app) {
-            $cachePath = __DIR__.'/../../app/cache/'.Constant::CONFIG_CACHE_FILE_NAME;
+            $cachePath = $app->getCacheDir().'/'.Constant::CONFIG_CACHE_FILE_NAME;
 
             $cache = new ConfigCache($cachePath, $app['debug']);
 
@@ -119,10 +118,10 @@ class Application extends ApplicationTrait
                     $config_path['template_admin_html_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['template_admin_html_realdir'];
                     $config_path['template_realdir'] = $app->getAppDir().$config_path['template_realdir'];
                     $config_path['template_html_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['template_html_realdir'];
-                    $config_path['template_temp_realdir'] = $app->getAppDir().$config_path['template_temp_realdir'];
-                    $config_path['csv_temp_realdir'] = $app->getAppDir().$config_path['csv_temp_realdir'];
+                    $config_path['template_temp_realdir'] = $app->getCacheDir().$config_path['template_temp_realdir'];
+                    $config_path['csv_temp_realdir'] = $app->getCacheDir().$config_path['csv_temp_realdir'];
                     $config_path['plugin_realdir'] = $app->getAppDir().$config_path['plugin_realdir'];
-                    $config_path['plugin_temp_realdir'] = $app->getAppDir().$config_path['plugin_temp_realdir'];
+                    $config_path['plugin_temp_realdir'] = $app->getCacheDir().$config_path['plugin_temp_realdir'];
                     $config_path['plugin_html_realdir'] = $app->getRootDir().$config_path['public_path'].$config_path['plugin_html_realdir'];
                 }
 
@@ -194,7 +193,7 @@ class Application extends ApplicationTrait
     {
         $app = $this;
         $this->register(new ServiceProvider\EccubeMonologServiceProvider($app));
-        $this['monolog.logfile'] = __DIR__.'/../../app/log/site.log';
+        $this['monolog.logfile'] = $app->getLogDir().'/site.log';
         $this['monolog.name'] = 'eccube';
     }
 
@@ -215,7 +214,7 @@ class Application extends ApplicationTrait
 
         // init provider
         $this->register(new \Silex\Provider\HttpCacheServiceProvider(), array(
-            'http_cache.cache_dir' => __DIR__.'/../../app/cache/http/',
+            'http_cache.cache_dir' => $this->getCacheDir().'/http/',
         ));
 
         $this->register(new \Silex\Provider\HttpFragmentServiceProvider());
@@ -312,7 +311,7 @@ class Application extends ApplicationTrait
     public function initSession()
     {
         $this->register(new \Silex\Provider\SessionServiceProvider(), array(
-            'session.storage.save_path' => $this['config']['root_dir'].'/app/cache/eccube/session',
+            'session.storage.save_path' => $this->getCacheDir().'/eccube/session',
             'session.storage.options' => array(
                 'name' => 'eccube',
                 'cookie_path' => $this['config']['root_urlpath'] ?: '/',
@@ -347,11 +346,7 @@ class Application extends ApplicationTrait
                 $app['admin'] = false;
                 $app['front'] = false;
 
-                if (isset($app['profiler'])) {
-                    $cacheBaseDir = __DIR__.'/../../app/cache/twig/profiler/';
-                } else {
-                    $cacheBaseDir = __DIR__.'/../../app/cache/twig/production/';
-                }
+                $cacheBaseDir = $app->getCacheDir().'/twig/';
                 $pathinfo = rawurldecode($app['request']->getPathInfo());
                 if (strpos($pathinfo, '/'.trim($app['config']['admin_route'], '/')) === 0) {
                     if (file_exists(__DIR__.'/../../app/template/admin')) {
@@ -525,27 +520,24 @@ class Application extends ApplicationTrait
             }
         }
 
+        $doctrineCacheDir = $this->getCacheDir().'/doctrine';
+
         $this->register(new \Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider(), array(
-            'orm.proxies_dir' => __DIR__.'/../../app/cache/doctrine',
+            'orm.proxies_dir' => $doctrineCacheDir.'/proxy',
             'orm.em.options' => array(
                 'mappings' => $ormMappings,
-                'metadata_cache' => array(
-                    'driver' => 'filesystem',
-                    'path' => __DIR__.'/../../app/cache/doctrine',
-                ),
-                'query_cache' => array(
-                    'driver' => 'filesystem',
-                    'path' => __DIR__.'/../../app/cache/doctrine',
-                ),
             ),
         ));
 
         $config = $this['orm.em']->getConfiguration();
 
-        $cache = new FilesystemCache(__DIR__.'/../../app/cache/query');
+        $cache = new FilesystemCache($doctrineCacheDir.'/metadata');
+        $config->setMetadataCacheImpl($cache);
+
+        $cache = new FilesystemCache($doctrineCacheDir.'/query');
         $config->setQueryCacheImpl($cache);
 
-        $cache = new PhpFileCache(__DIR__.'/../../app/cache/result');
+        $cache = new PhpFileCache($doctrineCacheDir.'/result');
         $config->setResultCacheImpl($cache);
 
     }
@@ -778,15 +770,15 @@ class Application extends ApplicationTrait
             $response->setSharedMaxAge(100);
             $response->setPublic();
 
-//            $response->setETag(md5($response->getContent()));
-//            $response->isNotModified($request);
-//
-//            $response->setCache(array(
-//                'public' => false,
-//                'private' => true,
-//                //'max_age'       => 1,
-//                //'s_maxage'      => 10,
-//            ));
+            //            $response->setETag(md5($response->getContent()));
+            //            $response->isNotModified($request);
+            //
+            //            $response->setCache(array(
+            //                'public' => false,
+            //                'private' => true,
+            //                //'max_age'       => 1,
+            //                //'s_maxage'      => 10,
+            //            ));
 
             $route = $event->getRequest()->attributes->get('_route');
 
@@ -977,67 +969,6 @@ class Application extends ApplicationTrait
                 }
             }
         }
-    }
-
-    /**
-     * EC-CUBE Root Directory
-     *
-     * @return string
-     */
-    public function getRootDir()
-    {
-        static $dir;
-        if (null === $dir) {
-            $r = new \ReflectionObject($this);
-            $dir = dirname(dirname(dirname($r->getFileName())));
-        }
-
-        return $dir;
-    }
-
-    /**
-     * EC-CUBE app Directory
-     *
-     * @return string
-     */
-    public function getAppDir()
-    {
-        static $dir;
-        if (null === $dir) {
-            $dir = $this->getRootDir().'/app';
-        }
-
-        return $dir;
-    }
-
-    /**
-     * EC-CUBE src Directory
-     *
-     * @return string
-     */
-    public function getSrcDir()
-    {
-        static $dir;
-        if (null === $dir) {
-            $dir = $this->getRootDir().'/src';
-        }
-
-        return $dir;
-    }
-
-    /**
-     * EC-CUBE html Directory
-     *
-     * @return string
-     */
-    public function getHtmlDir()
-    {
-        static $dir;
-        if (null === $dir) {
-            $dir = $this->getRootDir().$this['config']['public_path'];
-        }
-
-        return $dir;
     }
 
     /**

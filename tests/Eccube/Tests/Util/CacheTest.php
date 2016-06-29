@@ -31,14 +31,16 @@ class CacheTest extends \PHPUnit_Framework_TestCase
                 'root_dir' => vfsStream::url('rootDir')
             )
         );
-        mkdir($this->app['config']['root_dir'].'/app/cache', 0777, true);
-        file_put_contents($this->app['config']['root_dir'].'/app/cache/.gitkeep', 'test');
+
+        $cacheDir = $this->app->getCacheDir();
+        mkdir($cacheDir.'/app/cache', 0777, true);
+        file_put_contents($cacheDir.'/app/cache/.gitkeep', 'test');
         // ランダムなファイルを生成しておく
         foreach ($this->dirs as $dir) {
-            mkdir($this->app['config']['root_dir'].'/app/cache/'.$dir, 0777, true);
+            mkdir($cacheDir.'/app/cache/'.$dir, 0777, true);
             $n = mt_rand(5, 10);
             for ($i = 0; $i < $n; $i++) {
-                file_put_contents($this->app['config']['root_dir'].'/app/cache/'.$dir.'/'.$i, 'test');
+                file_put_contents($cacheDir.'/app/cache/'.$dir.'/'.$i, 'test');
             }
         }
     }
@@ -51,7 +53,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
         $finder = new Finder();
         $iterator = $finder
             ->ignoreDotFiles(false)
-            ->in($this->app['config']['root_dir'].'/app/cache')
+            ->in($this->app->getCacheDir())
             ->files();
 
         foreach ($iterator as $fileinfo) {
@@ -69,7 +71,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
         $finder = new Finder();
         $iterator = $finder
             ->ignoreDotFiles(false)
-            ->in($this->app['config']['root_dir'].'/app/cache')
+            ->in($this->app->getCacheDir())
             ->files();
 
         foreach ($iterator as $fileinfo) {

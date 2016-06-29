@@ -34,19 +34,25 @@ class InstallControllerProvider implements ControllerProviderInterface
         /* @var $controllers \Silex\ControllerCollection */
         $controllers = $app['controllers_factory'];
 
+        // Controllerのコンストラクタにappを渡すためServiceControllerServiceProviderで設定する
+        $app['install.controller'] = $app->share(function() use ($app) {
+            return new \Eccube\Controller\Install\InstallController($app);
+        });
+
         // installer
-        $controllers->match('', "\\Eccube\\Controller\\Install\\InstallController::index")->bind('install');
-        $controllers->match('/step1', "\\Eccube\\Controller\\Install\\InstallController::step1")->bind('install_step1');
-        $controllers->match('/step2', "\\Eccube\\Controller\\Install\\InstallController::step2")->bind('install_step2');
-        $controllers->match('/step3', "\\Eccube\\Controller\\Install\\InstallController::step3")->bind('install_step3');
-        $controllers->match('/step4', "\\Eccube\\Controller\\Install\\InstallController::step4")->bind('install_step4');
-        $controllers->match('/step5', "\\Eccube\\Controller\\Install\\InstallController::step5")->bind('install_step5');
+        $controllers->match('', "install.controller:index")->bind('install');
+        $controllers->match('/step1', 'install.controller:step1')->bind('install_step1');
+        $controllers->match('/step2', 'install.controller:step2')->bind('install_step2');
+        $controllers->match('/step3', 'install.controller:step3')->bind('install_step3');
+        $controllers->match('/step4', 'install.controller:step4')->bind('install_step4');
+        $controllers->match('/step5', 'install.controller:step5')->bind('install_step5');
 
-        $controllers->match('/complete', "\\Eccube\\Controller\\Install\\InstallController::complete")->bind('install_complete');
+        $controllers->match('/complete', 'install.controller:complete')->bind('install_complete');
 
-        $controllers->match('/migration', "\\Eccube\\Controller\\Install\\InstallController::migration")->bind('migration');
-        $controllers->match('/migration_plugin', "\\Eccube\\Controller\\Install\\InstallController::migration_plugin")->bind('migration_plugin');
-        $controllers->match('/migration_end', "\\Eccube\\Controller\\Install\\InstallController::migration_end")->bind('migration_end');
+        $controllers->match('/migration', 'install.controller:migration')->bind('migration');
+        $controllers->match('/migration_plugin', 'install.controller:migration_plugin')->bind('migration_plugin');
+        $controllers->match('/migration_end', 'install.controller:migration_end')->bind('migration_end');
+
         return $controllers;
     }
 }
