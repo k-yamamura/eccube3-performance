@@ -525,28 +525,25 @@ class Application extends ApplicationTrait
             }
         }
 
+        $doctrineCacheDir = __DIR__.'/../../app/cache/doctrine';
+
         $this->register(new \Dflydev\Silex\Provider\DoctrineOrm\DoctrineOrmServiceProvider(), array(
-            'orm.proxies_dir' => __DIR__.'/../../app/cache/doctrine',
+            'orm.proxies_dir' => $doctrineCacheDir.'/proxy',
             'orm.em.options' => array(
                 'mappings' => $ormMappings,
-                'metadata_cache' => array(
-                    'driver' => 'filesystem',
-                    'path' => __DIR__.'/../../app/cache/doctrine',
-                ),
-                'query_cache' => array(
-                    'driver' => 'filesystem',
-                    'path' => __DIR__.'/../../app/cache/doctrine',
-                ),
             ),
         ));
 
-        $config = $this['orm.em']->getConfiguration();
+        $configuration = $this['orm.em.config'];
 
-        $cache = new FilesystemCache(__DIR__.'/../../app/cache/query');
-        $config->setQueryCacheImpl($cache);
+        $cache = new FilesystemCache($doctrineCacheDir.'/metadata');
+        $configuration->setMetadataCacheImpl($cache);
 
-        $cache = new PhpFileCache(__DIR__.'/../../app/cache/result');
-        $config->setResultCacheImpl($cache);
+        $cache = new FilesystemCache($doctrineCacheDir.'/query');
+        $configuration->setQueryCacheImpl($cache);
+
+        $cache = new PhpFileCache($doctrineCacheDir.'/result');
+        $configuration->setResultCacheImpl($cache);
 
     }
 
